@@ -141,29 +141,26 @@
 <section class="hero teaser">
   <div class="container is-max-desktop">
     <div class="hero-body">
-      <div class="carousel-container">
-        <div class="video-carousel">
-          <div class="video-slide active">
-            <video width="100%" height="400" controls autoplay muted loop>
-              <source src="static/videos/sss_Demo.mp4" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div class="video-slide">
-            <video width="100%" height="400" controls autoplay muted loop>
-              <source src="static/videos/sss_Demo.mp4" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div class="video-slide">
-            <video width="100%" height="400" controls autoplay muted loop>
-              <source src="static/videos/sss_Demo.mp4" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
+      <div class="carousel-wrapper">
+        <div class="carousel-container">
+          <div class="video-carousel">
+            <div class="video-slide">
+              <video width="100%" height="400" controls autoplay muted loop>
+                <source src="static/videos/sss_Demo.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div class="video-slide">
+              <video width="100%" height="400" controls autoplay muted loop>
+                <source src="static/videos/APT-45s.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
           </div>
         </div>
         <button class="carousel-button prev">&lt;</button>
         <button class="carousel-button next">&gt;</button>
+        <div class="carousel-dots"></div>
       </div>
 
       <h2 class="subtitle has-text-centered">
@@ -174,38 +171,55 @@
 </section>
 
 <style>
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 0 60px;
+  margin: 0 auto;
+}
+
 .carousel-container {
   position: relative;
-  width: 80%;
+  width: 100%;
   margin: 0 auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .video-carousel {
   display: flex;
   transition: transform 0.5s ease-in-out;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
 .video-slide {
   flex: 0 0 100%;
-  opacity: 0.5;
-  transition: opacity 0.5s ease-in-out;
+  opacity: 0.3;
+  transition: all 0.5s ease-in-out;
+  transform: scale(0.8);
 }
 
 .video-slide.active {
   opacity: 1;
+  transform: scale(1);
+}
+
+.video-slide.prev,
+.video-slide.next {
+  opacity: 0.5;
+  transform: scale(0.9);
 }
 
 .carousel-button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   color: white;
   border: none;
   padding: 15px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 24px;
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -213,18 +227,41 @@
   align-items: center;
   justify-content: center;
   z-index: 10;
+  transition: background 0.3s ease;
 }
 
 .carousel-button:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
 }
 
 .carousel-button.prev {
-  left: 10px;
+  left: 0;
 }
 
 .carousel-button.next {
-  right: 10px;
+  right: 0;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.dot.active {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>
 
@@ -234,19 +271,41 @@ document.addEventListener('DOMContentLoaded', function() {
   const slides = document.querySelectorAll('.video-slide');
   const prevButton = document.querySelector('.carousel-button.prev');
   const nextButton = document.querySelector('.carousel-button.next');
+  const dotsContainer = document.querySelector('.carousel-dots');
   let currentSlide = 0;
+
+  // Create dots
+  slides.forEach((_, index) => {
+    const dot = document.createElement('div');
+    dot.classList.add('dot');
+    if (index === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => {
+      currentSlide = index;
+      updateCarousel();
+    });
+    dotsContainer.appendChild(dot);
+  });
 
   function updateCarousel() {
     // Update transform to show current slide
     carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
     
-    // Update active state and opacity
+    // Update slides states
     slides.forEach((slide, index) => {
+      slide.classList.remove('active', 'prev', 'next');
       if (index === currentSlide) {
         slide.classList.add('active');
-      } else {
-        slide.classList.remove('active');
+      } else if (index === currentSlide - 1 || (currentSlide === 0 && index === slides.length - 1)) {
+        slide.classList.add('prev');
+      } else if (index === currentSlide + 1 || (currentSlide === slides.length - 1 && index === 0)) {
+        slide.classList.add('next');
       }
+    });
+
+    // Update dots
+    const dots = dotsContainer.querySelectorAll('.dot');
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === currentSlide);
     });
   }
 
@@ -318,7 +377,7 @@ abstract = {Reproducing realistic collective behaviors presents a captivating ye
         <div class="content">
 
           <p>
-            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
             You are free to borrow the source code of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
             Commons Attribution-ShareAlike 4.0 International License</a>.
           </p>
