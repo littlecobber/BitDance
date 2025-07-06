@@ -145,13 +145,13 @@
         <div class="carousel-container">
           <div class="video-carousel">
             <div class="video-slide">
-              <video width="100%" height="400" controls autoplay muted loop>
+              <video width="100%" height="400" controls>
                 <source src="static/videos/sss_Demo.mp4" type="video/mp4">
                 Your browser does not support the video tag.
               </video>
             </div>
             <div class="video-slide">
-              <video width="100%" height="400" controls autoplay muted loop>
+              <video width="100%" height="400" controls>
                 <source src="static/videos/APT-45s.mp4" type="video/mp4">
                 Your browser does not support the video tag.
               </video>
@@ -269,6 +269,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const carousel = document.querySelector('.video-carousel');
   const slides = document.querySelectorAll('.video-slide');
+  const videos = document.querySelectorAll('.video-slide video');
   const prevButton = document.querySelector('.carousel-button.prev');
   const nextButton = document.querySelector('.carousel-button.next');
   const dotsContainer = document.querySelector('.carousel-dots');
@@ -285,6 +286,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     dotsContainer.appendChild(dot);
   });
+
+  // Function to handle video playback
+  function handleVideoPlayback(index) {
+    videos.forEach((video, i) => {
+      if (i === index) {
+        // Play and unmute current video
+        video.currentTime = 0; // Reset video to start
+        video.muted = false; // Unmute
+        video.play()
+          .catch(error => {
+            console.log("Video autoplay failed:", error);
+            // Fallback: keep video muted if autoplay with sound fails
+            video.muted = true;
+            video.play();
+          });
+      } else {
+        // Pause and reset other videos
+        video.pause();
+        video.currentTime = 0;
+        video.muted = true;
+      }
+    });
+  }
 
   function updateCarousel() {
     // Update transform to show current slide
@@ -307,6 +331,9 @@ document.addEventListener('DOMContentLoaded', function() {
     dots.forEach((dot, index) => {
       dot.classList.toggle('active', index === currentSlide);
     });
+
+    // Handle video playback
+    handleVideoPlayback(currentSlide);
   }
 
   prevButton.addEventListener('click', () => {
@@ -319,8 +346,17 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCarousel();
   });
 
-  // Initialize carousel
+  // Initialize carousel and play first video
   updateCarousel();
+
+  // Add keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      prevButton.click();
+    } else if (e.key === 'ArrowRight') {
+      nextButton.click();
+    }
+  });
 });
 </script>
 
