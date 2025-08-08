@@ -31,6 +31,7 @@
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
   rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="static/css/bulma.min.css">
   <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
@@ -49,6 +50,13 @@
 </head>
 <body>
 
+  <!-- 加载动画覆盖层 -->
+  <div class="loading-overlay" id="loading-overlay">
+    <canvas id="scribble-canvas"></canvas>
+    <div class="loading-text-container">
+      <h1 id="loading-logo-text">BeatDance</h1>
+    </div>
+  </div>
 
   <section class="hero">
     <div class="hero-body">
@@ -361,6 +369,60 @@
 .dot:hover {
   background: rgba(0, 0, 0, 0.6);
 }
+
+/* 加载动画样式 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#scribble-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.loading-text-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+#loading-logo-text {
+  font-family: 'Caveat', cursive;
+  font-size: 12vw;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  text-shadow: 
+    0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff,
+    0 0 20px #ff00ff,
+    0 0 35px #ff00ff, 0 0 40px #ff00ff,
+    0 0 50px #ff00ff, 0 0 75px #9400D3;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.fade-in { animation: fadeIn 1.5s ease-in-out forwards; }
+.fade-out { animation: fadeOut 1.5s ease-in-out forwards; }
 </style>
 
 <script>
@@ -484,6 +546,113 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+</script>
+
+<!-- 加载动画脚本 -->
+<script>
+// 背景涂鸦线条动画
+const canvas = document.getElementById('scribble-canvas');
+const ctx = canvas.getContext('2d');
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const TRACER_COUNT = 5;
+const COLORS = ['#FF00FF', '#9400D3', '#FF1493', '#DA70D6', '#EE82EE'];
+const BASE_SPEED = 36.0;
+const MAX_HISTORY = 1200;
+
+class Tracer {
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.history = [];
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.lineWidth = Math.random() * 4 + 1;
+        this.angle = Math.random() * Math.PI * 2;
+        this.life = Math.random() * 200 + 150;
+        this.initialLife = this.life;
+    }
+
+    update() {
+        this.life--;
+        if (this.life <= 0 || this.x > width + 100 || this.x < -100 || this.y > height + 100 || this.y < -100) {
+            this.reset();
+        }
+
+        this.angle += (Math.random() - 0.5) * 0.2;
+        const speedX = Math.cos(this.angle) * BASE_SPEED;
+        const speedY = Math.sin(this.angle) * BASE_SPEED;
+
+        this.x += speedX;
+        this.y += speedY;
+
+        this.history.push({ x: this.x, y: this.y });
+        if (this.history.length > MAX_HISTORY) {
+            this.history.shift();
+        }
+    }
+
+    draw() {
+        if (this.history.length < 2) return;
+
+        ctx.beginPath();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.lineWidth;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        
+        ctx.moveTo(this.history[0].x, this.history[0].y);
+        for (let i = 1; i < this.history.length; i++) {
+            ctx.lineTo(this.history[i].x, this.history[i].y);
+        }
+        ctx.stroke();
+        ctx.closePath();
+    }
+}
+
+const tracers = [];
+for (let i = 0; i < TRACER_COUNT; i++) {
+    tracers.push(new Tracer());
+}
+
+function animate() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+    ctx.fillRect(0, 0, width, height);
+
+    tracers.forEach(t => {
+        t.update();
+        t.draw();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+// 启动动画
+animate();
+
+// 监听窗口大小变化
+window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+});
+
+// 文字动画时序控制
+const logoText = document.getElementById('loading-logo-text');
+const loadingOverlay = document.getElementById('loading-overlay');
+
+setTimeout(() => { logoText.classList.add('fade-in'); }, 500);
+setTimeout(() => {
+    logoText.classList.remove('fade-in');
+    logoText.classList.add('fade-out');
+}, 2000);
+setTimeout(() => {
+    loadingOverlay.style.display = 'none';
+}, 2500);
 </script>
 
 
